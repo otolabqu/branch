@@ -1,0 +1,89 @@
+<canvas id="canvas2" width="100" height="100" style="image-rendering: pixelated;"></canvas>
+<br>
+
+
+<button onclick="pause()">Pause</button>
+<script>
+
+const DELAY = 100
+let paused = false
+
+    function pause() {
+        paused = !paused
+    }
+    function randInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function max0(x) {
+        return Math.max(0, x)
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    var canvas2 = document.getElementById('canvas2');
+    var ctx2 = canvas2.getContext('2d');
+    ctx2.fillStyle = "#000000"
+    ctx2.fillRect(0, 0, 100, 100)
+    let time = 0
+    
+    var im = ctx2.createImageData(1,1); // only do this once per page
+    var d  = im.data;                        // only do this once per page
+    d[0]   = 0;
+    d[1]   = 250;
+    d[2]   = 0;
+    d[3]   = 250;
+   
+    function dist(b, a) {
+        let dx = b.x - a[0]
+        let dy = b.y - a[1]
+        let c2 = dx*dx + dy*dy
+        return Math.sqrt(c2)
+    }
+   
+    let flibs = [
+        {
+            x : 50,
+            y : 0,
+            dx : 0,
+            dy : 1
+        }
+    ]
+
+    async function move() {
+        flibs.forEach(f => {
+            f.x = bound( f.x + f.dx)
+            f.y = bound( f.y + f.dy)
+        })
+    }
+
+    function bound(n) {
+        if (n < 0) return 0
+        if (n> 99) return 99
+        return n
+    }
+
+    async function render() {
+        flibs.forEach(f => {
+            ctx2.putImageData( im, f.x, f.y);  
+        })
+    }
+    async function hej() {
+        await sleep(DELAY)
+        if (paused) {return}
+        time++
+
+        await move()
+        await render()
+    }
+    
+
+    async function start() {
+        while(true) {
+            
+            await hej()
+        }
+    }
+    start()
+</script>
