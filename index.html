@@ -1,6 +1,6 @@
 <canvas id="canvas2" width="100" height="100" style="image-rendering: pixelated;"></canvas>
 <br>
-
+<label id ="alive"></label>
 <button onclick="pause()">Pause</button>
 <script>
 
@@ -12,6 +12,10 @@ let paused = false
     }
     function randInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pm1() {
+        return Math.random() < 0.5 ? -1 : 1
     }
 
     function max0(x) {
@@ -44,24 +48,67 @@ let paused = false
     let flibs = [
         {
             x : 50,
-            y : 0,
+            y : 50,
             dx : 0,
-            dy : 1
+            dy : 1,
+            valid: 1
         }
     ]
 
     async function move() {
         flibs.forEach(f => {
-            f.x = bound( f.x + f.dx)
-            f.y = bound( f.y + f.dy)
+            let nx = f.x + f.dx
+            let ny = f.y + f.dy
+            if (validnextmove(nx, ny)) {
+                f.x = nx
+                f.y = ny
+                f.valid = 1
+            } else {
+                f.valid--
+                turn(f)
+            }
+            
         })
     }
 
-    async function turn() {
-        flibs.forEach( f => {
+    function validnextmove(x, y) {
+        
+        if (x < 1 || x > 98) {
+            return false
+        }
+        if (y < 1 || y > 98) {
+            return false
+        }
+        let im = ctx2.getImageData(x-1, y-1, 3,3)
+        //console.log("imagedata of next move 3x3")
+        //console.log(im)
+        let d = im.data
+        let greensum = 0
+        for (let i = 1; ; i+=4) {
+            if (d[i] === undefined) {
+                break
+            }
+            greensum += d[i]
+            
+        }
+        //console.log("greensum: " + greensum)
+        if (greensum > 500) {
+            return false
+        }
+        //pause()
+        return true
+    }
+
+    async function turnall() {
+        flibs.forEach(f => {
             let r = Math.random()
             if (r < 0.1) {
-                let newdirection = (r - 0.05)/Math.abs((r - 0.05))
+                turn(f)
+            }
+        })
+    }
+    async function turn(f) {
+                let newdirection = pm1()
                 if (f.dx != 0) {
                     f.dx = 0
                     f.dy = newdirection
@@ -69,20 +116,21 @@ let paused = false
                     f.dy = 0
                     f.dx = newdirection
                 }
-            }
-        })
     }
 
     async function branch() {
         let newborn = []
         flibs.forEach( f => {
+            if (f.valid < 1) {
+                return
+            }
             let r = Math.random()
             if (r < 0.01) {
                 let newflib = {
                     x: f.x,
                     y: f.y,
-                    dx: -f.dy,
-                    dy: -f.dx
+                    dx: f.dx == 0 ? pm1() : 0,
+                    dy: f.dy == 0 ? pm1() : 0
                 }
                 newborn.push(newflib)
             }
@@ -103,15 +151,24 @@ let paused = false
             ctx2.putImageData( im, f.x, f.y);  
         })
     }
+
+    async function starve() {
+        flibs = flibs.filter(f => {return f.valid > -10})
+    }
     async function hej() {
         await sleep(DELAY)
         if (paused) {return}
         time++
 
         await move()
-        await turn()
+        await starve()
+        await turnall()
         await branch()
         await render()
+        document.getElementById("alive").innerHTML = "Alive: " + flibs.length
+        if (flibs.length < 1) {
+            window.alert("GAME OVER")
+        }
     }
     
 
