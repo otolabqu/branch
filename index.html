@@ -73,6 +73,25 @@ let paused = false
         })
     }
 
+    async function branch() {
+        let newborn = []
+        flibs.forEach( f => {
+            let r = Math.random()
+            if (r < 0.01) {
+                let newflib = {
+                    x: f.x,
+                    y: f.y,
+                    dx: -f.dy,
+                    dy: -f.dx
+                }
+                newborn.push(newflib)
+            }
+            
+        })
+
+        newborn.forEach(f => {flibs.push(f)})
+        
+    }
     function bound(n) {
         if (n < 0) return 0
         if (n> 99) return 99
@@ -91,6 +110,7 @@ let paused = false
 
         await move()
         await turn()
+        await branch()
         await render()
     }
     
